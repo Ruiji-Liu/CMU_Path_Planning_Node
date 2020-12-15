@@ -1,21 +1,21 @@
 #include "ros/ros.h"
-#include "cmu_ekf/lines_org.h"
-#include "cmu_ekf/line_polar.h"
+#include "CMU_EKF_Node/lines_org.h"
+#include "CMU_EKF_Node/line_polar.h"
 #include "nav_msgs/Odometry.h"
 #include "tf/transform_datatypes.h"
 #include "Eigen/Dense"
-#include "cmu_path_planning/path.h"
+#include "CMU_Path_Planning_Node/path.h"
 #include "visualization_msgs/Marker.h"
 
 // Function Prototypes
-void lineCallback(const cmu_ekf::lines_org::ConstPtr &msg);
+void lineCallback(const CMU_EKF_Node::lines_org::ConstPtr &msg);
 double getYaw(const double w, const double x, const double y, const double z);
 void odomCallback(const nav_msgs::Odometry::ConstPtr &msg);
 
 // Helper Constants
-constexpr uint8_t LEFT = cmu_ekf::line_polar::LEFT;
-constexpr uint8_t CENTER = cmu_ekf::line_polar::CENTER;
-constexpr uint8_t RIGHT = cmu_ekf::line_polar::RIGHT;
+constexpr uint8_t LEFT = CMU_EKF_Node::line_polar::LEFT;
+constexpr uint8_t CENTER = CMU_EKF_Node::line_polar::CENTER;
+constexpr uint8_t RIGHT = CMU_EKF_Node::line_polar::RIGHT;
 
 double x, y, yaw;
 ros::Publisher pubPath, pubMarker;
@@ -58,7 +58,7 @@ void displayPoint(std::vector<geometry_msgs::Point> points, float r, float g, fl
  * @param b the b value in rgb color scheme
  * @param id the ID to assign to the line
  */
-void displayLine(cmu_ekf::line_polar line, float r, float g, float b, int id) {
+void displayLine(CMU_EKF_Node::line_polar line, float r, float g, float b, int id) {
     uint32_t shape = visualization_msgs::Marker::LINE_STRIP;
 
     visualization_msgs::Marker marker;
@@ -98,9 +98,9 @@ void displayLine(cmu_ekf::line_polar line, float r, float g, float b, int id) {
 }
 
 
-void lineCallback(const cmu_ekf::lines_org::ConstPtr &msg) {
+void lineCallback(const CMU_EKF_Node::lines_org::ConstPtr &msg) {
     //Receive a left and right line, determine a middle line, choose points on that line
-    cmu_ekf::line_polar middle_line;
+    CMU_EKF_Node::line_polar middle_line;
     middle_line.theta = (msg->left.theta + msg->right.theta) / 2;
     //Left is negative, right is positive
     double ave_dist {(-msg->left.distance + msg->right.distance) / 2};
@@ -150,8 +150,8 @@ void lineCallback(const cmu_ekf::lines_org::ConstPtr &msg) {
         points.push_back(ptC);
     }
 
-    cmu_path_planning::path path;
-    path.header = ros::Time::now();
+    CMU_Path_Planning_Node::path path;
+    path.header.stamp = ros::Time::now();
     path.pts = points;
     pubPath.publish(path);
 }
@@ -195,9 +195,9 @@ int main(int argc, char **argv) {
 
     ros::NodeHandle n;
 
-    ros::Subscriber subLines = n.subscribe<cmu_ekf::lines_org>("/ekf_lines", 1, lineCallback);
+    ros::Subscriber subLines = n.subscribe<CMU_EKF_Node::lines_org>("/ekf_lines", 1, lineCallback);
     ros::Subscriber subOdom = n.subscribe<nav_msgs::Odometry>("/odometry/filtered", 1, odomCallback);
-    pubPath = n.advertise<cmu_path_planning::path>("/path_planned", 1);
+    pubPath = n.advertise<CMU_Path_Planning_Node::path>("/path_planned", 1);
     pubMarker = n.advertise<visualization_msgs::Marker>("/visualization_marker", 1);
 
     ros::spin();

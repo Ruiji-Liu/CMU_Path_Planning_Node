@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(cmu_path_planning)
+project(CMU_Path_Planning_Node)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -11,8 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   geometry_msgs
-  cmu_ekf
-  PCL REQUIRED
+  CMU_EKF_Node
+  pcl_conversions
+  pcl_ros
   message_generation
 )
 
@@ -73,7 +74,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
-  cmu_ekf
+  CMU_EKF_Node
   geometry_msgs
 )
 
@@ -109,7 +110,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES cmu_path_planning
- CATKIN_DEPENDS roscpp std_msgs cmu_ekf message_runtime geometry_msgs
+ CATKIN_DEPENDS roscpp std_msgs CMU_EKF_Node message_runtime geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -122,7 +123,6 @@ catkin_package(
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -211,5 +211,5 @@ include_directories(
 # catkin_add_nosetests(test)
 
 add_executable(path_planning src/main.cpp)
-target_link_libraries(path_planning ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(path_planning ${catkin_LIBRARIES})
 add_dependencies(path_planning ${catkin_EXPORTED_TARGETS})
