@@ -52,8 +52,6 @@ void displayPoints(std::vector<geometry_msgs::Point> points) {
         marker.pose.position.y = points.at(i).y + y;
         marker.pose.position.z = 0.0;
 
-        std::cout << "Point at : " << marker.pose.position.x << " " << marker.pose.position.y << std::endl;
-
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
@@ -160,61 +158,10 @@ void lineCallback(const CMU_EKF_Node::lines_org::ConstPtr &msg) {
 
     displayPoints(points);
 
-    // std::vector<geometry_msgs::Point> testing;
-    // geometry_msgs::Point robotAhead;
-    // robotAhead.x = 0;
-    // robotAhead.y = 0.5;
-    // testing.push_back(robotAhead);
-    // displayPoints(testing);
-    
-
-//     polarPoint mid;
-//     mid.distance = (msg->left.distance + msg->right.distance) / 2;
-//     double ave_theta {(msg->left.theta + msg->right.theta) / 2};
-//     mid.theta = middle_line.direction == RIGHT ? M_PI_2 - ave_dist : M_PI_2 - ave_dist + 180;
-
-//     std::vector<geometry_msgs::Point> points;
-
-// /**
-//  * 
-//  *          |                                 (x2, y2)> |_
-//  *          |                                           | `~_
-//  *          |                                           |    `~_ (r2, θ2)           r2 (c) = sqrt(r1^2 + dx^2)
-//  *          |                                           |       `~_                 θ2 = θ1 - tan^-1(dx / r1)
-//  *          |                                           |          `~_
-//  *          |    (r1,θ1)                                |             `~_           x2, y2 = r2cos(θ2), r2sin(θ2)
-//  * (x1,y1)> |~~~~~~~~~~~~~~~~* (0,0)                    |~~~~~~~~~~~~~~~~* (0,0)
-//  *          
-//  *                                         _
-//  *  | : line to follow, * : robot, ~~~ or   `~ : vector to point
-//  */
-
-//     // Every dx meters on this line, there will be a point
-//     double dx {0.5};
-//     unsigned numPoints {10};
-
-//     geometry_msgs::Point direct;
-//     direct.x = middle_line.distance * std::cos(middle_line.theta);
-//     direct.y = middle_line.distance * std::sin(middle_line.theta);
-
-//     points.push_back(direct);
-
-//     displayPoint(points, 1, 0, 0, 1);
-
-//     for(int i{0}; i < numPoints; i++) {
-//         polarPoint ptP;
-//         ptP.distance = std::sqrt((middle_line.distance * middle_line.distance) + (dx * dx));
-//         ptP.theta = middle_line.theta - std::atan(dx / middle_line.distance);
-//         geometry_msgs::Point ptC;
-//         ptC.x = ptP.distance * std::cos(middle_line.theta);
-//         ptC.y = ptP.distance * std::sin(middle_line.theta);
-//         points.push_back(ptC);
-//     }
-
-//     CMU_Path_Planning_Node::path path;
-//     path.header.stamp = ros::Time::now();
-//     path.pts = points;
-//     pubPath.publish(path);
+    CMU_Path_Planning_Node::path path;
+    path.header.stamp = ros::Time::now();
+    path.pts = points;
+    pubPath.publish(path);
 }
 
 /**
