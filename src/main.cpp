@@ -31,7 +31,7 @@ void displayPoints(std::vector<geometry_msgs::Point> points) {
     
     for(int i {0}; i < points.size(); i++) {
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "odom";
+        marker.header.frame_id = "base_link";
         marker.header.stamp = ros::Time::now();
 
         marker.ns = "waypoints";
@@ -48,8 +48,10 @@ void displayPoints(std::vector<geometry_msgs::Point> points) {
         marker.color.b = 0.0;
         marker.color.a = 1.0;
 
-        marker.pose.position.x = points.at(i).x + x;
-        marker.pose.position.y = points.at(i).y + y;
+        // marker.pose.position.x = points.at(i).x + x;
+        // marker.pose.position.y = points.at(i).y + y;
+        marker.pose.position.x = points.at(i).x;
+        marker.pose.position.y = points.at(i).y;
         marker.pose.position.z = 0.0;
 
         marker.pose.orientation.x = 0.0;
@@ -113,47 +115,44 @@ void displayLine(CMU_EKF_Node::line_polar line, float r, float g, float b, int i
 
 
 void lineCallback(const CMU_EKF_Node::lines_org::ConstPtr &msg) {
-    //Receive a left and right line, determine a middle line, choose points on that line
-    CMU_EKF_Node::line_polar middle_line;
-
-    //Left is negative, right is positive
-    double ave_dist {(-msg->left.distance + msg->right.distance) / 2};
-    middle_line.direction = ave_dist < 0 ? LEFT : RIGHT;
-    middle_line.distance = std::abs(ave_dist);
-
-    if (middle_line.direction == RIGHT) {
-        middle_line.theta = (msg->right.theta + (M_PI_2 + (M_PI_2 - msg->left.theta))) / 2;
-    } else {
-        middle_line.theta = (msg->left.theta + (M_PI_2 + (M_PI_2 - msg->right.theta))) / 2;
-    }
-
-    std::cout << "Mid: " << middle_line.distance << " " << middle_line.theta << std::endl;
-
-    geometry_msgs::Point original;
-    original.x = 0;
-    original.y = middle_line.direction == RIGHT ? -middle_line.distance : middle_line.distance;
-
     std::vector<geometry_msgs::Point> points;
-    points.push_back(original);
-
-    std::cout << "Point: " << original.x << " " << original.y << std::endl;
 
     // Every dx meters on this line, there will be a point
     double dxAbsolute {0.5};
     unsigned numPoints {10};
 
-    double dx {dxAbsolute * std::sin(middle_line.theta)};
-    double dy {dxAbsolute * std::abs(std::cos(middle_line.theta))};
-    if((middle_line.direction == LEFT && middle_line.theta < M_PI_2) ||
-       (middle_line.direction == RIGHT && middle_line.theta > M_PI_2)) {
-            dy *= -1;
-        }
-
     for(int i{1}; i < numPoints; i++) {
-        geometry_msgs::Point pt;
-        pt.x = original.x + (dx * i);
-        pt.y = original.y + (dy * i);
-        points.push_back(pt);
+        geometry_msgs::Point left_pt;
+        left_pt.x = dxAbsolute * i;
+
+        // Get X,Y from the distance and theta
+        double x {msg->left.distance * std::cos(msg->left.theta)};
+
+        // Reverse the y, since left should be positive (but left theta is negative)
+        double y {-msg->left.distance * std::sin(msg->left.theta)};
+
+        // Get slope from this x,y and the theta (theta is normal to the slope)
+        double slope {1 / std::tan(msg->left.theta)};
+        double intercept {y - slope * x};
+
+        // std::cout << "left: from distance " << msg->left.distance << " and theta " << msg->left.theta << " got x " << x << " and y " << y << " and slope " << slope << " and intercept " << intercept << std::endl;
+
+        // Get the y value from the x value
+        left_pt.y = slope * left_pt.x + intercept;
+
+        geometry_msgs::Point right_pt;
+        right_pt.x = dxAbsolute * i;
+        x = msg->right.distance * std::cos(msg->right.theta);
+        y = -msg->right.distance * std::sin(msg->right.theta);
+        slope = 1 / std::tan(msg->right.theta);
+        intercept = y - slope * x;
+        right_pt.y = slope * right_pt.x + intercept;
+
+        geometry_msgs::Point mid_pt;
+        mid_pt.x = dxAbsolute * i;
+        mid_pt.y = (left_pt.y + right_pt.y) / 2;
+
+        points.push_back(mid_pt);
     }
 
     displayPoints(points);
@@ -207,7 +206,7 @@ int main(int argc, char **argv) {
     ros::Subscriber subOdom = n.subscribe<nav_msgs::Odometry>("/odometry/filtered", 1, odomCallback);
     pubPath = n.advertise<CMU_Path_Planning_Node::path>("/path_planned", 1);
     pubMarker = n.advertise<visualization_msgs::Marker>("/visualization_marker", 1);
-    pubMarkers = n.advertise<visualization_msgs::MarkerArray>("visualization_waypoint", 1);
+    pubMarkers = n.advertise<visualization_msgs::MarkerArray>("/visualization_waypoint", 1);
 
     ros::spin();
 
