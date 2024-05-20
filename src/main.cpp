@@ -204,6 +204,8 @@ int main(int argc, char **argv) {
 
     ros::Subscriber subLines = n.subscribe<CMU_EKF_Node::lines_org>("/ekf_lines", 1, lineCallback);
     ros::Subscriber subOdom = n.subscribe<nav_msgs::Odometry>("/odometry/filtered", 1, odomCallback);
+    // ros::Subscriber subOdom = n.subscribe<nav_msgs::Odometry>("/odom", 1, odomCallback);
+    //ros::Subscriber subOdom = n.subscribe<nav_msgs::Odometry>("/odom", 1, odomCallback);
     pubPath = n.advertise<CMU_Path_Planning_Node::path>("/path_planned", 1);
     pubMarker = n.advertise<visualization_msgs::Marker>("/visualization_marker", 1);
     pubMarkers = n.advertise<visualization_msgs::MarkerArray>("/visualization_waypoint", 1);
